@@ -1,0 +1,10 @@
+---
+deployment:
+  tasks:
+    - export PATH=/opt/cpanel/ea-nodejs23/bin/:$PATH
+    - export DEPLOYPATH=/home/ixdderuf/2xd-site/
+    - /bin/rsync -a --exclude=.git ./ $DEPLOYPATH
+    - source /home/ixdderuf/nodevenv/2xd-site/24/bin/activate && cd $DEPLOYPATH
+    - npm ci
+    - npm run build
+    - npm install --production
