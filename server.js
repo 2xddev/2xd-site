@@ -21,7 +21,7 @@ app.use(express.static(path.join(__dirname, "client")));
 app.all(
   /.*/,
   createRequestHandler({
-    build: () => import("./server/index.js"), // Let op: vaak staat dit in de build-map!
+    build: () => import("./server/index.js"),
   })
 );
 

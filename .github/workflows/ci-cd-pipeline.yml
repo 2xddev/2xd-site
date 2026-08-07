@@ -1,0 +1,80 @@
+name: Deploy to Webserver
+
+on: 
+  workflow_dispatch:
+  push:
+    branches: ["main", "feature/*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 24
+        cache: 'npm'
+
+    - name: Install Dependencies & Build
+      run: |
+        npm ci
+        npm run build
+
+    - name: Save Build Folder
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-${{ github.head_ref }}-${{ github.sha }}
+        path: build/
+        retention-days: 1
+
+  deploy_to_prod:
+    environment: Production
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Load Build Folder
+      uses: actions/download-artifact@v4
+      with:
+        name: build-${{ github.head_ref }}-${{ github.sha }}
+        path: build/
+    
+    - name: Deploy to webhost via SSH/Rsync
+      uses: burnett01/rsync-deployments@v9
+      with:
+        path: ./build/
+        remote_path: ${{ secrets.DEPLOY_DIRECTORY }}
+        remote_host: ${{ secrets.SSH_HOST }}
+        remote_port: ${{ secrets.SSH_PORT }}
+        remote_user: ${{ secrets.SSH_USER }}
+        remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+        switches: -avz --delete
+  
+  deploy_to_staging:
+    environment: Staging
+    needs: build
+    if: contains(github.ref_name, 'feature/') 
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Load Build Folder
+      uses: actions/download-artifact@v4
+      with:
+        name: build-${{ github.head_ref }}-${{ github.sha }}
+        path: build/
+    
+    - name: Deploy to webhost via SSH/Rsync
+      uses: burnett01/rsync-deployments@v9
+      with:
+        path: ./build/
+        remote_path: ${{ secrets.DEPLOY_DIRECTORY }}
+        remote_host: ${{ secrets.SSH_HOST }}
+        remote_port: ${{ secrets.SSH_PORT }}
+        remote_user: ${{ secrets.SSH_USER }}
+        remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+        switches: -avz --delete

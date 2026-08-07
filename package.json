@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "react-router build  && cp-cli server.js build/server.js && cp-cli package.json build/package.json",
+    "build": "npx react-router build  && cp-cli server.js build/server.js && cp-cli package.json build/package.json",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc"
